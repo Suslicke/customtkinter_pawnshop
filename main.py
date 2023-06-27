@@ -102,7 +102,7 @@ class RegistrationWindow(CTk):
         
         self.role_label = CTkLabel(self, text="Роль")
         self.role_label.pack()
-        self.role_entry = CTkComboBox(self, values=["Преподаватели", "Секретарь"])
+        self.role_entry = CTkComboBox(self, values=["Администратор", "Секретарь"])
         self.role_entry.pack()
 
                 
@@ -181,15 +181,16 @@ class Application(CTk):
         
         self.update_button.pack(side="left", padx=5)
         self.export_button.pack(side="left", padx=5)
+        self.edit_button.pack(side="left", padx=5)
+        self.create_button.pack(side="left", padx=5)
+        self.delete_button.pack(side="left", padx=5)
 
         self.update_table()
         
         if user.access_level != None:
-            if user.access_level.name == "Секретарь":
-                self.edit_button.pack(side="left", padx=5)
-                self.create_button.pack(side="left", padx=5)
+            if user.access_level.name == "Администратор":
                 self.registration_button.pack(side="left", padx=5)
-                self.delete_button.pack(side="left", padx=5)
+                
         
         self.logout_button.pack(side="left", padx=5)
                 

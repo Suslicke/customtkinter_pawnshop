@@ -14,14 +14,14 @@ async def init():
     role_secretary, created = await Roles.get_or_create(name="Секретарь")
     await role_secretary.save()
 
-    role_teacher, created = await Roles.get_or_create(name="Преподаватель")
-    await role_teacher.save()
+    role_admin, created = await Roles.get_or_create(name="Администратор")
+    await role_admin.save()
 
     user, created = await Users.get_or_create(
         first_name="1",
         surname="1",
         patronymic="1",
-        access_level=role_secretary,
+        access_level=role_admin,
         password="1"
     )
     await user.save()
