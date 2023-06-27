@@ -58,7 +58,7 @@ class LoginWindow(CTk):
             self.error_label.pack()
         else:
             if user.password == password:
-                self.quit()
+                self.destroy()
                 
                 app = Application(user)
                 app.mainloop()
@@ -143,7 +143,8 @@ class Application(CTk):
             else:    
                 self.user_id = self.tree.item(selected)['values'][0]
                 self.user = loop.run_until_complete(Students.get(id=self.user_id))
-                EditDialog(user=self.user, on_finish=self.update_table)
+                app = EditDialog(user=self.user, on_finish=self.update_table)
+                app.mainloop()
         else:
             messagebox.showerror("Error", "Нет выбранного поля")
         
@@ -157,23 +158,23 @@ class Application(CTk):
             self.tree.insert('', 'end', values=(student.id, student.surname, student.first_name, student.patronymic, student.snils, student.pasport, student.address))
 
 
-    def export(self):
-        selected = self.tree.selection()
-        if selected:
-            with open("ExportTXT.txt", "w") as file:
-                for select in selected:
-                    self.user_id = self.tree.item(select)['values'][0]
-                    self.user = loop.run_until_complete(Students.get(id=self.user_id))
-                    if self.user:
-                        text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
-                        file.write(text)
-                    else:
-                        messagebox.showerror("Error", "Студент не найден")
-        else:
-            messagebox.showerror("Error", "Нет выбранного поля")
 
-        messagebox.showinfo("Info", "Данные были экспортированы в файл")
-            
+    def export(self):
+            selected = self.tree.selection()
+            if selected:
+                with open("ExportTXT.txt", "w", encoding="utf-8") as file:
+                    for select in selected:
+                        self.user_id = self.tree.item(select)['values'][0]
+                        self.user = loop.run_until_complete(Students.get(id=self.user_id))
+                        if self.user:
+                            text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
+                            file.write(text)
+                        else:
+                            messagebox.showerror("Error", "Студент не найден")
+            else:
+                messagebox.showerror("Error", "Нет выбранного поля")
+
+            messagebox.showinfo("Info", "Данные были экспортированы в файл")
     
     def logout(self):
         self.destroy()        
@@ -236,7 +237,7 @@ class EditDialog(CTk):
         if self.on_finish:
             self.on_finish()
             
-        self.quit()
+        self.destroy()
         
 
 class CreateDialog(CTk):
@@ -290,7 +291,7 @@ class CreateDialog(CTk):
         if self.on_finish:
             self.on_finish()
             
-        self.quit()
+        self.destroy()
         
         
 if __name__ == "__main__":
