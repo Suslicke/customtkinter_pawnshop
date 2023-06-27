@@ -47,6 +47,7 @@ class LoginWindow(CTk):
         )
         self.submit_button.pack(padx=20, pady=20)
 
+
     def check_credentials(self):
         first_name = self.first_name.get()
         surname = self.surname.get()
