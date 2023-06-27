@@ -11,7 +11,7 @@ source venv/bin/activate
 ```
 На винде вероятно:
 ```
-./venv/bin/activate.bat
+.\venv\Scripts\activate
 ```
 
 потом скачать все зависимости
