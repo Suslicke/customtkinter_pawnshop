@@ -39,13 +39,12 @@ class Products(models.Model): #Под редактирование
     """
 
     id = fields.IntField(pk=True)
-    first_name = fields.CharField(max_length=100, null=False)
-    surname = fields.CharField(max_length=100, null=False)
-    patronymic = fields.CharField(max_length=100, null=False)
+    product_name = fields.CharField(max_length=100, null=False)
+    from_where = fields.CharField(max_length=100, null=False)
+    where = fields.CharField(max_length=100, null=False)
     
-    snils = fields.CharField(max_length=20, null=False)
-    pasport = fields.CharField(max_length=20, null=False)
-    address = fields.CharField(max_length=100, null=False)
+    quantity = fields.CharField(max_length=20, null=False)
+    amount = fields.CharField(max_length=20, null=False)
     
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)

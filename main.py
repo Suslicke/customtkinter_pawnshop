@@ -2,7 +2,7 @@ import os
 from tkinter import ttk, messagebox
 import customtkinter
 from customtkinter import CTkButton, CTkEntry, CTkLabel, CTkInputDialog, CTk, CTkFrame, CTkComboBox
-from models import Users, Students, Roles
+from models import Users,Products,Roles
 from db import loop
 
 
@@ -154,20 +154,19 @@ class Application(CTk):
         style.map("Custom.Treeview",
                   background=[("selected", "#347083")])
 
-        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'Surname', 'Name', 'Patronymic', 'Snils', 'Pasport', 'Address'), show='headings')
+        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'product_name', 'from_where', 'where', 'quantity', 'amount'), show='headings')
         self.tree.heading('ID', text='ID')
-        self.tree.heading('Surname', text='Фамилия')
-        self.tree.heading('Name', text='Имя')
-        self.tree.heading('Patronymic', text='Отчество')
-        self.tree.heading('Snils', text='Снилс')
-        self.tree.heading('Pasport', text='Паспорт')
-        self.tree.heading('Address', text='Адрес')
+        self.tree.heading('product_name', text='Наименование товара')
+        self.tree.heading('from_where', text='Место откуда')
+        self.tree.heading('where', text='Куда')
+        self.tree.heading('quantity', text='Кол-во')
+        self.tree.heading('amount', text='Сумма')
         self.tree.grid(row=0)
         
         self.button_frame = CTkFrame(self)
         self.button_frame.grid(row=1, column=0, padx=20, pady=20)
         self.update_button = CTkButton(self.button_frame, text="Обновить", command=self.update_table)
-        self.create_button = CTkButton(self.button_frame, text="Добавить студента", command=self.create)
+        self.create_button = CTkButton(self.button_frame, text="Добавить товар", command=self.create)
         self.delete_button = CTkButton(self.button_frame, text="Удалить", command=self.delete_selected)
         self.edit_button = CTkButton(self.button_frame, text="Изменить", command=self.edit_selected)
         self.export_button = CTkButton(self.button_frame, text="Экспорт", command=self.export)
@@ -210,7 +209,7 @@ class Application(CTk):
         if selected:    
             for select in selected:
                 self.user_id = self.tree.item(select)['values'][0]
-                self.user = loop.run_until_complete(Students.get(id=self.user_id))
+                self.user = loop.run_until_complete(Products.get(id=self.user_id))
                 if self.user:
                     loop.run_until_complete(self.user.delete())
                     messagebox.showinfo("Info", "Данные были удалены")
@@ -232,7 +231,7 @@ class Application(CTk):
                     pass
             else:    
                 self.user_id = self.tree.item(selected)['values'][0]
-                self.user = loop.run_until_complete(Students.get(id=self.user_id))
+                self.user = loop.run_until_complete(Products.get(id=self.user_id))
                 app = EditDialog(user=self.user, on_finish=self.update_table)
                 app.mainloop()
         else:
@@ -243,9 +242,9 @@ class Application(CTk):
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        students = loop.run_until_complete(Students.all())
-        for student in students:
-            self.tree.insert('', 'end', values=(student.id, student.surname, student.first_name, student.patronymic, student.snils, student.pasport, student.address))
+        products = loop.run_until_complete(Products.all())
+        for product in products:
+            self.tree.insert('', 'end', values=(product.id, product.product_name, product.from_where, product.where, product.quantity, product.amount))
 
 
     def export(self):
@@ -254,7 +253,7 @@ class Application(CTk):
                 with open("ExportTXT.txt", "w", encoding="utf-8") as file:
                     for select in selected:
                         self.user_id = self.tree.item(select)['values'][0]
-                        self.user = loop.run_until_complete(Students.get(id=self.user_id))
+                        self.user = loop.run_until_complete(Products.get(id=self.user_id))
                         if self.user:
                             text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
                             file.write(text)
@@ -274,42 +273,36 @@ class EditDialog(CTk):
         self.user = user
         self.on_finish = on_finish
         super().__init__()
-        self.geometry("180x340")
+        self.geometry("380x340")
         self.resizable(False, False)
 
         self.title("Редактирование пользователя")
-        CTkLabel(self, text="Фамилия:").grid(row=0)
-        CTkLabel(self, text="Имя:").grid(row=1)
-        CTkLabel(self, text="Отчество:").grid(row=2)
-        CTkLabel(self, text="СНИЛС:").grid(row=3)
-        CTkLabel(self, text="Паспорт:").grid(row=4)
-        CTkLabel(self, text="Адрес:").grid(row=5)
-
+        CTkLabel(self, text="Наименование товара:").grid(row=0)
+        CTkLabel(self, text="Место откуда:").grid(row=1)
+        CTkLabel(self, text="Куда:").grid(row=2)
+        CTkLabel(self, text="Кол-во:").grid(row=3)
+        CTkLabel(self, text="Сумма:").grid(row=4)
 
         self.name_entry = CTkEntry(self, placeholder_text="Иванов")
-        self.name_entry.insert(0, self.user.first_name)
+        self.name_entry.insert(0, self.user.product_name)
         self.name_entry.grid(row=0, column=1)
         
         self.surname_entry = CTkEntry(self, placeholder_text="Иван")
-        self.surname_entry.insert(0, self.user.surname)
+        self.surname_entry.insert(0, self.user.from_where)
         self.surname_entry.grid(row=1, column=1)
 
 
         self.patronymic_entry = CTkEntry(self, placeholder_text="Иванович")
-        self.patronymic_entry.insert(0, self.user.patronymic)
+        self.patronymic_entry.insert(0, self.user.where)
         self.patronymic_entry.grid(row=2, column=1)
         
         self.snils_entry = CTkEntry(self, placeholder_text="СНИЛС")
-        self.snils_entry.insert(0, self.user.snils)
+        self.snils_entry.insert(0, self.user.quantity)
         self.snils_entry.grid(row=3, column=1)
         
         self.pasport_entry = CTkEntry(self, placeholder_text="Паспорт")
-        self.pasport_entry.insert(0, self.user.pasport)
+        self.pasport_entry.insert(0, self.user.amount)
         self.pasport_entry.grid(row=4, column=1)
-        
-        self.address_entry = CTkEntry(self, placeholder_text="Адрес")
-        self.address_entry.insert(0, self.user.address)
-        self.address_entry.grid(row=5, column=1)
         
         self.apply_button = CTkButton(self, text="Сохранить", command=self.apply)
         self.apply_button.grid(row=6, column=1)
@@ -317,12 +310,11 @@ class EditDialog(CTk):
 
     def apply(self):
         
-        self.user.first_name = self.name_entry.get()
-        self.user.surname = self.surname_entry.get()
-        self.user.patronymic = self.patronymic_entry.get()
-        self.user.snils = self.snils_entry.get()
-        self.user.pasport = self.pasport_entry.get()
-        self.user.address = self.address_entry.get()
+        self.user.product_name = self.name_entry.get()
+        self.user.from_where = self.surname_entry.get()
+        self.user.where = self.patronymic_entry.get()
+        self.user.quantity = self.snils_entry.get()
+        self.user.amount = self.pasport_entry.get()
         
         loop.run_until_complete(self.user.save())
         if self.on_finish:
@@ -339,13 +331,11 @@ class CreateDialog(CTk):
         self.resizable(False, False)
 
         self.title("Редактирование пользователя")
-        CTkLabel(self, text="Фамилия:").grid(row=0)
-        CTkLabel(self, text="Имя:").grid(row=1)
-        CTkLabel(self, text="Отчество:").grid(row=2)
-        CTkLabel(self, text="СНИЛС:").grid(row=3)
-        CTkLabel(self, text="Паспорт:").grid(row=4)
-        CTkLabel(self, text="Адрес:").grid(row=5)
-
+        CTkLabel(self, text="Наименование товара:").grid(row=0)
+        CTkLabel(self, text="Место откуда:").grid(row=1)
+        CTkLabel(self, text="Куда:").grid(row=2)
+        CTkLabel(self, text="Кол-во:").grid(row=3)
+        CTkLabel(self, text="Сумма:").grid(row=4)
 
         self.name_entry = CTkEntry(self, placeholder_text="Иванов")
         self.name_entry.grid(row=0, column=1)
@@ -372,14 +362,13 @@ class CreateDialog(CTk):
 
     def apply(self):
         
-        loop.run_until_complete(Students.create(
-            first_name=self.name_entry.get(),
-            surname=self.surname_entry.get(), 
-            patronymic = self.patronymic_entry.get(),
-            snils = self.snils_entry.get(),
-            pasport = self.pasport_entry.get(),
-            address = self.address_entry.get())
-                                )  
+        loop.run_until_complete(Products.create(
+            product_name=self.name_entry.get(),
+            from_where=self.surname_entry.get(), 
+            where=self.patronymic_entry.get(),
+            quantity=self.snils_entry.get(),
+            amount=self.pasport_entry.get()
+                                ))  
 
         if self.on_finish:
             self.on_finish()
