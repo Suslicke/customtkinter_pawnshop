@@ -9,6 +9,8 @@ from db import loop
 class LoginWindow(CTk):
     def __init__(self):
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Авторизация")
         
@@ -41,9 +43,9 @@ class LoginWindow(CTk):
         self.submit_button = CTkButton(
             master=self,
             text="Авторизоваться",
-            command=self.check_credentials
+            command=self.check_credentials,
         )
-        self.submit_button.pack()
+        self.submit_button.pack(padx=20, pady=20)
 
     def check_credentials(self):
         first_name = self.first_name.get()
@@ -69,12 +71,27 @@ class LoginWindow(CTk):
 class Application(CTk):
     def __init__(self, user=None):
         super().__init__()
-        
+        self.geometry("1410x295")
+        self.resizable(False, False)
+
         self.user = user
         loop.run_until_complete(user.fetch_related('access_level'))
         self.title(f"Добро пожаловать, {self.user.first_name}!")
 
-        self.tree = ttk.Treeview(self, columns=('ID', 'Surname', 'Name', 'Patronymic', 'Snils', 'Pasport', 'Address'), show='headings')
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        style.configure("Custom.Treeview",
+                        background="#333333",  
+                        foreground="white", 
+                        fieldbackground="#333333",
+                        borderwidth=10, 
+                        relief="solid"
+                        ),
+
+        style.map("Custom.Treeview",
+                  background=[("selected", "#347083")])
+
+        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'Surname', 'Name', 'Patronymic', 'Snils', 'Pasport', 'Address'), show='headings')
         self.tree.heading('ID', text='ID')
         self.tree.heading('Surname', text='Фамилия')
         self.tree.heading('Name', text='Имя')
@@ -85,7 +102,7 @@ class Application(CTk):
         self.tree.grid(row=0)
         
         self.button_frame = CTkFrame(self)
-        self.button_frame.grid(row=1, column=0)
+        self.button_frame.grid(row=1, column=0, padx=20, pady=20)
         self.update_button = CTkButton(self.button_frame, text="Обновить", command=self.update_table)
         self.create_button = CTkButton(self.button_frame, text="Добавить студента", command=self.create)
         self.delete_button = CTkButton(self.button_frame, text="Удалить", command=self.delete_selected)
@@ -185,6 +202,8 @@ class EditDialog(CTk):
         self.user = user
         self.on_finish = on_finish
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Фамилия:").grid(row=0)
@@ -244,6 +263,8 @@ class CreateDialog(CTk):
     def __init__(self, on_finish=None):
         self.on_finish = on_finish
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Фамилия:").grid(row=0)
