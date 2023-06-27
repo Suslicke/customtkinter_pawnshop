@@ -11,7 +11,7 @@ async def init():
     # Generate the schema
     await Tortoise.generate_schemas()
     
-    roles = Roles(id=1, name="Секретарь", description="1")
+    roles = Roles(name="Секретарь", description="1")
     await roles.save()
     user = Users(first_name="1", surname="1", patronymic="1", access_level=roles, password="1")
     await user.save()
