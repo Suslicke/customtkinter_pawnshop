@@ -9,6 +9,8 @@ from db import loop
 class LoginWindow(CTk):
     def __init__(self):
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Авторизация")
         
@@ -41,9 +43,9 @@ class LoginWindow(CTk):
         self.submit_button = CTkButton(
             master=self,
             text="Авторизоваться",
-            command=self.check_credentials
+            command=self.check_credentials,
         )
-        self.submit_button.pack()
+        self.submit_button.pack(padx=20, pady=20)
 
     def check_credentials(self):
         first_name = self.first_name.get()
@@ -58,7 +60,7 @@ class LoginWindow(CTk):
             self.error_label.pack()
         else:
             if user.password == password:
-                self.quit()
+                self.destroy()
                 
                 app = Application(user)
                 app.mainloop()
@@ -69,12 +71,27 @@ class LoginWindow(CTk):
 class Application(CTk):
     def __init__(self, user=None):
         super().__init__()
-        
+        self.geometry("1410x295")
+        self.resizable(False, False)
+
         self.user = user
         loop.run_until_complete(user.fetch_related('access_level'))
         self.title(f"Добро пожаловать, {self.user.first_name}!")
 
-        self.tree = ttk.Treeview(self, columns=('ID', 'Surname', 'Name', 'Patronymic', 'Snils', 'Pasport', 'Address'), show='headings')
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        style.configure("Custom.Treeview",
+                        background="#333333",  
+                        foreground="white", 
+                        fieldbackground="#333333",
+                        borderwidth=10, 
+                        relief="solid"
+                        ),
+
+        style.map("Custom.Treeview",
+                  background=[("selected", "#347083")])
+
+        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'Surname', 'Name', 'Patronymic', 'Snils', 'Pasport', 'Address'), show='headings')
         self.tree.heading('ID', text='ID')
         self.tree.heading('Surname', text='Фамилия')
         self.tree.heading('Name', text='Имя')
@@ -85,7 +102,7 @@ class Application(CTk):
         self.tree.grid(row=0)
         
         self.button_frame = CTkFrame(self)
-        self.button_frame.grid(row=1, column=0)
+        self.button_frame.grid(row=1, column=0, padx=20, pady=20)
         self.update_button = CTkButton(self.button_frame, text="Обновить", command=self.update_table)
         self.create_button = CTkButton(self.button_frame, text="Добавить студента", command=self.create)
         self.delete_button = CTkButton(self.button_frame, text="Удалить", command=self.delete_selected)
@@ -143,7 +160,8 @@ class Application(CTk):
             else:    
                 self.user_id = self.tree.item(selected)['values'][0]
                 self.user = loop.run_until_complete(Students.get(id=self.user_id))
-                EditDialog(user=self.user, on_finish=self.update_table)
+                app = EditDialog(user=self.user, on_finish=self.update_table)
+                app.mainloop()
         else:
             messagebox.showerror("Error", "Нет выбранного поля")
         
@@ -157,23 +175,23 @@ class Application(CTk):
             self.tree.insert('', 'end', values=(student.id, student.surname, student.first_name, student.patronymic, student.snils, student.pasport, student.address))
 
 
-    def export(self):
-        selected = self.tree.selection()
-        if selected:
-            with open("ExportTXT.txt", "w") as file:
-                for select in selected:
-                    self.user_id = self.tree.item(select)['values'][0]
-                    self.user = loop.run_until_complete(Students.get(id=self.user_id))
-                    if self.user:
-                        text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
-                        file.write(text)
-                    else:
-                        messagebox.showerror("Error", "Студент не найден")
-        else:
-            messagebox.showerror("Error", "Нет выбранного поля")
 
-        messagebox.showinfo("Info", "Данные были экспортированы в файл")
-            
+    def export(self):
+            selected = self.tree.selection()
+            if selected:
+                with open("ExportTXT.txt", "w", encoding="utf-8") as file:
+                    for select in selected:
+                        self.user_id = self.tree.item(select)['values'][0]
+                        self.user = loop.run_until_complete(Students.get(id=self.user_id))
+                        if self.user:
+                            text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
+                            file.write(text)
+                        else:
+                            messagebox.showerror("Error", "Студент не найден")
+            else:
+                messagebox.showerror("Error", "Нет выбранного поля")
+
+            messagebox.showinfo("Info", "Данные были экспортированы в файл")
     
     def logout(self):
         self.destroy()        
@@ -184,6 +202,8 @@ class EditDialog(CTk):
         self.user = user
         self.on_finish = on_finish
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Фамилия:").grid(row=0)
@@ -236,13 +256,15 @@ class EditDialog(CTk):
         if self.on_finish:
             self.on_finish()
             
-        self.quit()
+        self.destroy()
         
 
 class CreateDialog(CTk):
     def __init__(self, on_finish=None):
         self.on_finish = on_finish
         super().__init__()
+        self.geometry("180x340")
+        self.resizable(False, False)
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Фамилия:").grid(row=0)
@@ -290,7 +312,7 @@ class CreateDialog(CTk):
         if self.on_finish:
             self.on_finish()
             
-        self.quit()
+        self.destroy()
         
         
 if __name__ == "__main__":
