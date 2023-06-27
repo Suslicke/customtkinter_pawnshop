@@ -255,7 +255,7 @@ class Application(CTk):
                         self.user_id = self.tree.item(select)['values'][0]
                         self.user = loop.run_until_complete(Products.get(id=self.user_id))
                         if self.user:
-                            text = f"Имя: {self.user.first_name}\nФамилия: {self.user.surname}\nОтчество: {self.user.patronymic}\nСНИЛС: {self.user.snils}\nПаспорт: {self.user.pasport}\nАдрес: {self.user.address}\n\n"
+                            text = f"Имя продукта: {self.user.product_name}\nМесто откуда: {self.user.from_where}\nКуда: {self.user.where}\nКол-во: {self.user.quantity}\nСумма: {self.user.amount}\n\n"
                             file.write(text)
                         else:
                             messagebox.showerror("Error", "Студент не найден")
