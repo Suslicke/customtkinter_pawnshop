@@ -33,7 +33,7 @@ class Users(models.Model):
         return self.first_name
 
 
-class Students(models.Model):
+class Products(models.Model): #Под редактирование
     """
     The Students model
     """
