@@ -1,8 +1,8 @@
 import os
 from tkinter import ttk, messagebox
 import customtkinter
-from customtkinter import CTkButton, CTkEntry, CTkLabel, CTkInputDialog, CTk, CTkFrame
-from models import Users, Students
+from customtkinter import CTkButton, CTkEntry, CTkLabel, CTkInputDialog, CTk, CTkFrame, CTkComboBox
+from models import Users, Students, Roles
 from db import loop
 
 
@@ -67,7 +67,69 @@ class LoginWindow(CTk):
             else:
                 self.error_label.pack()
                 
+                
+class RegistrationWindow(CTk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("180x400")
+        self.resizable(False, False)
 
+        self.title("Регистрация")
+        
+        self.surname_label = CTkLabel(self, text="Фамилия")
+        self.surname_label.pack()
+        self.surname = CTkEntry(self, placeholder_text="Иванов")
+        self.surname.pack()
+        
+        
+        self.first_name_label = CTkLabel(self, text="Имя")
+        self.first_name_label.pack()
+        self.first_name = CTkEntry(self, placeholder_text="Иван")
+        self.first_name.pack()
+        
+        
+        self.patronymic_label = CTkLabel(self, text="Отчество")
+        self.patronymic_label.pack()
+        self.patronymic = CTkEntry(self, placeholder_text="Иванович")
+        self.patronymic.pack()
+
+
+        self.password_label = CTkLabel(self, text="Пароль")
+        self.password_label.pack()
+        self.password_entry = CTkEntry(self, show="*")
+        self.password_entry.pack()
+        
+        self.role_label = CTkLabel(self, text="Роль")
+        self.role_label.pack()
+        self.role_entry = CTkComboBox(self, values=["Преподаватели", "Секретарь"])
+        self.role_entry.pack()
+
+                
+        self.error_label = CTkLabel(self, text="Неверные данные")
+        
+
+        self.submit_button = CTkButton(
+            master=self,
+            text="Регистрация",
+            command=self.registration,
+        )
+        self.submit_button.pack(padx=20, pady=20)
+
+    def registration(self):
+        
+        self.roles = loop.run_until_complete(Roles.filter(name=self.role_entry.get()).first())
+        
+        loop.run_until_complete(Users.create(
+            first_name=self.first_name.get(),
+            surname=self.first_name.get(), 
+            patronymic = self.patronymic.get(),
+            password = self.password_entry.get(),
+            access_level = self.roles
+            ))
+                    
+        self.destroy()
+
+        
 class Application(CTk):
     def __init__(self, user=None):
         super().__init__()
@@ -108,6 +170,8 @@ class Application(CTk):
         self.delete_button = CTkButton(self.button_frame, text="Удалить", command=self.delete_selected)
         self.edit_button = CTkButton(self.button_frame, text="Изменить", command=self.edit_selected)
         self.export_button = CTkButton(self.button_frame, text="Экспорт", command=self.export)
+        self.registration_button = CTkButton(self.button_frame, text="Регистрация", command=self.registration)
+        
         self.logout_button = CTkButton(
             self.button_frame,
             text="Выйти",
@@ -123,10 +187,17 @@ class Application(CTk):
             if user.access_level.name == "Секретарь":
                 self.edit_button.pack(side="left", padx=5)
                 self.create_button.pack(side="left", padx=5)
+                self.registration_button.pack(side="left", padx=5)
                 self.delete_button.pack(side="left", padx=5)
         
         self.logout_button.pack(side="left", padx=5)
                 
+                
+    def registration(self):
+        app = RegistrationWindow()
+        app.mainloop()
+
+
     def create(self):
         app = CreateDialog(on_finish=self.update_table)
         app.mainloop()
@@ -173,7 +244,6 @@ class Application(CTk):
         students = loop.run_until_complete(Students.all())
         for student in students:
             self.tree.insert('', 'end', values=(student.id, student.surname, student.first_name, student.patronymic, student.snils, student.pasport, student.address))
-
 
 
     def export(self):
