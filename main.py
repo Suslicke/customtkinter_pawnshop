@@ -2,8 +2,16 @@ import os
 from tkinter import ttk, messagebox
 import customtkinter
 from customtkinter import CTkButton, CTkEntry, CTkLabel, CTkInputDialog, CTk, CTkFrame, CTkComboBox
-from models import Users,Products,Roles
+from models import Items, Users, Roles
 from db import loop
+
+def validate_float_input(input):
+    try:
+        if input:
+            float(input)
+        return True
+    except ValueError:
+        return False
 
 
 class LoginWindow(CTk):
@@ -102,7 +110,7 @@ class RegistrationWindow(CTk):
         
         self.role_label = CTkLabel(self, text="Роль")
         self.role_label.pack()
-        self.role_entry = CTkComboBox(self, values=["Администратор", "Секретарь"])
+        self.role_entry = CTkComboBox(self, values=["Администратор", "Оценщик"])
         self.role_entry.pack()
 
                 
@@ -134,7 +142,7 @@ class RegistrationWindow(CTk):
 class Application(CTk):
     def __init__(self, user=None):
         super().__init__()
-        self.geometry("1210x295")
+        self.geometry("1510x295")
         self.resizable(False, False)
 
         self.user = user
@@ -154,13 +162,23 @@ class Application(CTk):
         style.map("Custom.Treeview",
                   background=[("selected", "#347083")])
 
-        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'product_name', 'from_where', 'where', 'quantity', 'amount'), show='headings')
+        self.tree = ttk.Treeview(self, style="Custom.Treeview", columns=('ID', 'item_name', 'type_of_item', 'vescar', 'weight', 'price', 'first_name', 'surname', 'modified_at'), show='headings')
+        
+        column_widths = {'ID': 30, 'item_name': 200, 'type_of_item': 200, 'vescar': 100, 'weight': 100, 
+                 'price': 100, 'first_name': 150, 'surname': 150, 'modified_at': 200}
+        
+        for column, width in column_widths.items():
+            self.tree.column(column, width=width, stretch=False)
+
         self.tree.heading('ID', text='ID')
-        self.tree.heading('product_name', text='Наименование товара')
-        self.tree.heading('from_where', text='Место откуда')
-        self.tree.heading('where', text='Куда')
-        self.tree.heading('quantity', text='Кол-во')
-        self.tree.heading('amount', text='Сумма')
+        self.tree.heading('item_name', text='Наименование товара')
+        self.tree.heading('type_of_item', text='металл/драг. камень')
+        self.tree.heading('vescar', text='Караты/Проба')
+        self.tree.heading('weight', text='Масса')
+        self.tree.heading('price', text='Цена')
+        self.tree.heading('first_name', text='Имя')
+        self.tree.heading('surname', text='Фамилия')
+        self.tree.heading('modified_at', text='Дата')
         self.tree.grid(row=0)
         
         self.button_frame = CTkFrame(self)
@@ -208,14 +226,14 @@ class Application(CTk):
         selected = self.tree.selection()
         if selected:    
             for select in selected:
-                self.product_id = self.tree.item(select)['values'][0]
-                self.product = loop.run_until_complete(Products.get(id=self.product_id))
-                if self.product:
-                    loop.run_until_complete(self.product.delete())
+                self.item_id = self.tree.item(select)['values'][0]
+                self.item = loop.run_until_complete(Items.get(id=self.item_id))
+                if self.item:
+                    loop.run_until_complete(self.item.delete())
                     messagebox.showinfo("Info", "Данные были удалены")
                     self.update_table()
                 else:
-                    messagebox.showerror("Error", "Студент не найден")
+                    messagebox.showerror("Error", "Товар не найден")
         else:
             messagebox.showerror("Error", "Нет выбранного поля")
     
@@ -224,15 +242,14 @@ class Application(CTk):
         selected = self.tree.selection()
         if selected:    
             if len(selected) > 1:
-                print("hellooo")
                 try:
                     messagebox.showerror("Error", "Выбрано несколько полей, можно только 1")
                 except:
                     pass
             else:    
-                self.product_id = self.tree.item(selected)['values'][0]
-                self.product = loop.run_until_complete(Products.get(id=self.product_id))
-                app = EditDialog(product=self.product, on_finish=self.update_table)
+                self.item_id = self.tree.item(selected)['values'][0]
+                self.item = loop.run_until_complete(Items.get(id=self.item_id))
+                app = EditDialog(item=self.item, on_finish=self.update_table)
                 app.mainloop()
         else:
             messagebox.showerror("Error", "Нет выбранного поля")
@@ -242,9 +259,9 @@ class Application(CTk):
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        products = loop.run_until_complete(Products.all())
-        for product in products:
-            self.tree.insert('', 'end', values=(product.id, product.product_name, product.from_where, product.where, product.quantity, product.amount))
+        items = loop.run_until_complete(Items.all())
+        for item in items:
+            self.tree.insert('', 'end', values=(item.id, item.item_name, item.type_of_item, item.vescar, item.weight, item.price, item.first_name, item.surname, item.modified_at))
 
 
     def export(self):
@@ -252,13 +269,13 @@ class Application(CTk):
             if selected:
                 with open("ExportTXT.txt", "w", encoding="utf-8") as file:
                     for select in selected:
-                        self.user_id = self.tree.item(select)['values'][0]
-                        self.user = loop.run_until_complete(Products.get(id=self.user_id))
+                        self.item_id = self.tree.item(select)['values'][0]
+                        self.item = loop.run_until_complete(Items.get(id=self.item_id))
                         if self.user:
-                            text = f"Имя продукта: {self.user.product_name}\nМесто откуда: {self.user.from_where}\nКуда: {self.user.where}\nКол-во: {self.user.quantity}\nСумма: {self.user.amount}\n\n"
+                            text = f"Наименование товара: {self.item.item_name}\nТип: {self.item.type_of_item}\nПроба/караты: {self.item.vescar}\nВес: {self.item.weight}\nЦена: {self.item.price}\nИмя: {self.item.first_name}\nФамилия: {self.item.surname}\nДата: {self.item.modified_at}\n\n"
                             file.write(text)
                         else:
-                            messagebox.showerror("Error", "Студент не найден")
+                            messagebox.showerror("Error", "Товар не найден")
             else:
                 messagebox.showerror("Error", "Нет выбранного поля")
 
@@ -269,8 +286,8 @@ class Application(CTk):
         
         
 class EditDialog(CTk):
-    def __init__(self, product, on_finish=None):
-        self.product = product
+    def __init__(self, item, on_finish=None):
+        self.item = item
         self.on_finish = on_finish
         super().__init__()
         self.geometry("380x340")
@@ -278,45 +295,60 @@ class EditDialog(CTk):
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Наименование товара:").grid(row=0)
-        CTkLabel(self, text="Место откуда:").grid(row=1)
-        CTkLabel(self, text="Куда:").grid(row=2)
-        CTkLabel(self, text="Кол-во:").grid(row=3)
-        CTkLabel(self, text="Сумма:").grid(row=4)
-
-        self.product_name = CTkEntry(self, placeholder_text="Мушкет")
-        self.product_name.insert(0, self.product.product_name)
-        self.product_name.grid(row=0, column=1)
+        CTkLabel(self, text="металл/драг. камень: ").grid(row=1)
+        CTkLabel(self, text="Караты/Проба:").grid(row=2)
+        CTkLabel(self, text="Масса:").grid(row=3)
+        CTkLabel(self, text="Цена:").grid(row=4)
+        CTkLabel(self, text="Имя:").grid(row=5)
+        CTkLabel(self, text="Фамилия:").grid(row=6)
+        CTkLabel(self, text="Дата:").grid(row=7)
         
-        self.from_where = CTkEntry(self, placeholder_text="ул.Пушкина")
-        self.from_where.insert(0, self.product.from_where)
-        self.from_where.grid(row=1, column=1)
+        val = self.register(validate_float_input)
+
+        self.item_name = CTkEntry(self, placeholder_text="Алмаз")
+        self.item_name.insert(0, self.item.item_name)
+        self.item_name.grid(row=0, column=1)
+        
+        self.type_of_item = CTkEntry(self, placeholder_text="Драг камень")
+        self.type_of_item.insert(0, self.item.type_of_item)
+        self.type_of_item.grid(row=1, column=1)
 
 
-        self.where = CTkEntry(self, placeholder_text="ул.Дантес")
-        self.where.insert(0, self.product.where)
-        self.where.grid(row=2, column=1)
+        self.vescar = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.vescar.insert(0, self.item.vescar)
+        self.vescar.grid(row=2, column=1)
         
-        self.quantity = CTkEntry(self, placeholder_text="37")
-        self.quantity.insert(0, self.product.quantity)
-        self.quantity.grid(row=3, column=1)
+        self.weight = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.weight.insert(0, self.item.weight)
+        self.weight.grid(row=3, column=1)
         
-        self.amount = CTkEntry(self, placeholder_text="1837")
-        self.amount.insert(0, self.product.amount)
-        self.amount.grid(row=4, column=1)
+        self.price = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.price.insert(0, self.item.price)
+        self.price.grid(row=4, column=1)
+        
+        self.first_name = CTkEntry(self, placeholder_text="Иван")
+        self.first_name.insert(0, self.item.first_name)
+        self.first_name.grid(row=5, column=1)
+        
+        self.surname = CTkEntry(self, placeholder_text="Иванов")
+        self.surname.insert(0, self.item.surname)
+        self.surname.grid(row=6, column=1)
         
         self.apply_button = CTkButton(self, text="Сохранить", command=self.apply)
-        self.apply_button.grid(row=6, column=1)
+        self.apply_button.grid(row=8, column=1)
 
 
     def apply(self):
         
-        self.product.product_name = self.product_name.get()
-        self.product.from_where = self.from_where.get()
-        self.product.where = self.where.get()
-        self.product.quantity = self.quantity.get()
-        self.product.amount = self.amount.get()
+        self.item.item_name = self.item_name.get()
+        self.item.type_of_item = self.type_of_item.get()
+        self.item.vescar = self.vescar.get()
+        self.item.weight = self.weight.get()
+        self.item.price = self.price.get()
+        self.item.first_name = self.price.get()
+        self.item.surname = self.price.get()
         
-        loop.run_until_complete(self.product.save())
+        loop.run_until_complete(self.item.save())
         if self.on_finish:
             self.on_finish()
             
@@ -332,40 +364,54 @@ class CreateDialog(CTk):
 
         self.title("Редактирование пользователя")
         CTkLabel(self, text="Наименование товара:").grid(row=0)
-        CTkLabel(self, text="Место откуда:").grid(row=1)
-        CTkLabel(self, text="Куда:").grid(row=2)
-        CTkLabel(self, text="Кол-во:").grid(row=3)
-        CTkLabel(self, text="Сумма:").grid(row=4)
-
-        self.product_name = CTkEntry(self, placeholder_text="Мушкет")
-        self.product_name.grid(row=0, column=1)
+        CTkLabel(self, text="металл/драг. камень: ").grid(row=1)
+        CTkLabel(self, text="Караты/Проба:").grid(row=2)
+        CTkLabel(self, text="Масса:").grid(row=3)
+        CTkLabel(self, text="Цена:").grid(row=4)
+        CTkLabel(self, text="Имя:").grid(row=5)
+        CTkLabel(self, text="Фамилия:").grid(row=6)
+        CTkLabel(self, text="Дата:").grid(row=7)
         
-        self.from_where = CTkEntry(self, placeholder_text="ул.Пушкина")
-        self.from_where.grid(row=1, column=1)
+        val = self.register(validate_float_input)
 
 
-        self.where = CTkEntry(self, placeholder_text="ул.Дантес")
-        self.where.grid(row=2, column=1)
+        self.item_name = CTkEntry(self, placeholder_text="Алмаз")
+        self.item_name.grid(row=0, column=1)
         
-        self.quantity = CTkEntry(self, placeholder_text="37")
-        self.quantity.grid(row=3, column=1)
+        self.type_of_item = CTkEntry(self, placeholder_text="Драг камень")
+        self.type_of_item.grid(row=1, column=1)
+
         
-        self.amount = CTkEntry(self, placeholder_text="1837")
-        self.amount.grid(row=4, column=1)
+        self.vescar = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.vescar.grid(row=2, column=1)
+        
+        self.weight = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.weight.grid(row=3, column=1)
+        
+        self.price = CTkEntry(self, validate="key", validatecommand=(val, '%P'), placeholder_text="10.0")
+        self.price.grid(row=4, column=1)
+        
+        self.first_name = CTkEntry(self, placeholder_text="Иван")
+        self.first_name.grid(row=5, column=1)
+        
+        self.surname = CTkEntry(self, placeholder_text="Иванов")
+        self.surname.grid(row=6, column=1)
         
         self.apply_button = CTkButton(self, text="Сохранить", command=self.apply)
-        self.apply_button.grid(row=6, column=1)
+        self.apply_button.grid(row=7, column=1)
 
 
     def apply(self):
         
-        loop.run_until_complete(Products.create(
-            product_name=self.product_name.get(),
-            from_where=self.from_where.get(), 
-            where=self.where.get(),
-            quantity=self.quantity.get(),
-            amount=self.amount.get()
-                                ))  
+        loop.run_until_complete(Items.create(
+            item_name=self.item_name.get(),
+            type_of_item=self.type_of_item.get(), 
+            vescar=self.vescar.get(),
+            weight=self.weight.get(),
+            price=self.price.get(),
+            first_name=self.first_name.get(),
+            surname=self.surname.get(),
+            ))  
 
         if self.on_finish:
             self.on_finish()

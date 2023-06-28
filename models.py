@@ -33,18 +33,20 @@ class Users(models.Model):
         return self.first_name
 
 
-class Products(models.Model): #Под редактирование
+class Items(models.Model): #Под редактирование
     """
     The Students model
     """
 
     id = fields.IntField(pk=True)
-    product_name = fields.CharField(max_length=100, null=False)
-    from_where = fields.CharField(max_length=100, null=False)
-    where = fields.CharField(max_length=100, null=False)
+    item_name = fields.CharField(max_length=100, null=False)
+    type_of_item = fields.CharField(max_length=100, null=False)
+    vescar = fields.FloatField(max_length=20, null=False)
+    weight = fields.FloatField(max_length=20, null=False)
+    price = fields.FloatField(max_length=20, null=False)
     
-    quantity = fields.CharField(max_length=20, null=False)
-    amount = fields.CharField(max_length=20, null=False)
+    first_name = fields.CharField(max_length=50, null=False)
+    surname = fields.CharField(max_length=50, null=True)
     
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
